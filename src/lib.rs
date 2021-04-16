@@ -1,29 +1,61 @@
 #![no_std]
 
+//! # CPF
+//! 
+//! Brazilian CPF parsing, validating and formatting library.
+//!
+//! ```rust
+//! # fn main() -> Result<(), cpf::ParseCPFError> {
+//! use cpf::CPF;
+//!
+//! // If all you need is validating a CPF number, use the `valid` function:
+//! assert!(cpf::valid("38521139039"));
+//!
+//! // For formatting and additional metadata from the number, parse into the CPF struct:
+//! let cpf: CPF = "38521139039".parse()?;
+//!
+//! assert_eq!(cpf.formatted().as_str(), "385.211.390-39");
+//! assert_eq!(cpf.digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ## no_std support
+//!
+//! The library can be used on no_std environments by disabling the `std` flag:
+//!
+//! ```toml
+//! [dependencies]
+//! cpf = { version = "0.1", default-features = false }
+//! ```
+//!
+//! ## Random CPF generation support
+//!
+//! The `rand` feature flag enables random CPF generation:
+//!
+//! ```toml
+//! [dependencies]
+//! cpf = { version = "0.1", features = ["rand"] }
+//! rand = "0.8.3"
+//! ```
+//!
+//! ```rust
+//! # #[cfg(feature = "rand")] {
+//! use cpf::CPF;
+//! use rand;
+//! use rand::Rng;
+//!
+//! let cpf: CPF = rand::thread_rng().gen();
+//! # }
+//! ```
+
 use arrayvec::{ArrayString, ArrayVec};
 use core::char::from_digit;
 use core::convert::TryFrom;
 use core::fmt;
 use core::str::FromStr;
 
-#[cfg(feature = "rand")]
-use rand::distributions::{Distribution, Standard, Uniform};
-#[cfg(feature = "rand")]
-use rand::Rng;
-
-static BLACK_LIST: &'static [[u8; 11]] = &[
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-    [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-    [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
-    [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5],
-    [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
-    [7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7],
-    [8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8],
-    [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9],
-];
-
-/// Validates the given CPF number.
+/// Validates a CPF number.
 /// ```
 /// use cpf;
 ///
@@ -34,58 +66,56 @@ pub fn valid<T: AsRef<str>>(cpf: T) -> bool {
     parse(cpf).is_ok()
 }
 
-/// Parses a CPF number.
-/// ```
-/// use cpf;
-///
-/// assert!(cpf::parse("385.211.390-39").is_ok());
-/// assert!(cpf::parse("385.211.390-49").is_err());
-/// ```
-pub fn parse<T: AsRef<str>>(cpf: T) -> Result<CPF, ParseCPFError> {
-    let cpf = cpf.as_ref();
-
-    let digits_count = cpf.chars().filter(|c| c.is_numeric()).count();
-
-    if digits_count < 3 || digits_count > 11 {
-        return Err(ParseCPFError::InvalidLength);
-    }
-
-    let mut digits = cpf
-        .chars()
-        .filter_map(|c| c.to_digit(10).map(|d| d as u8))
-        .collect::<ArrayVec<u8, 11>>();
-
-    for i in 0..digits.remaining_capacity() {
-        digits.insert(i, 0);
-    }
-
-    let cpf = CPF {
-        digits: digits.into_inner().unwrap(),
-    };
-
-    if cpf.valid() {
-        Ok(cpf)
-    } else {
-        Err(ParseCPFError::InvalidChecksum)
-    }
-}
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum ParseCPFError {
     InvalidLength,
     InvalidChecksum,
 }
 
+/// A valid CPF number.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct CPF {
     digits: [u8; 11],
 }
 
 impl CPF {
+    /// The CPF digits.
+    /// ```rust
+    /// # fn main() -> Result<(), cpf::ParseCPFError> {
+    /// use cpf::CPF;
+    ///
+    /// let cpf: CPF = "385.211.390-39".parse()?;
+    ///
+    /// assert_eq!(cpf.digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn digits(&self) -> &[u8; 11] {
         &self.digits
     }
 
+    /// Formats a CPF number.
+    /// ```rust
+    /// # fn main() -> Result<(), cpf::ParseCPFError> {
+    /// use cpf::CPF;
+    ///
+    /// let cpf: CPF = "38521139039".parse()?;
+    ///
+    /// assert_eq!(cpf.formatted().as_str(), "385.211.390-39");
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// Note that numbers with less than 11 digits will be padded by zeros.
+    /// ```rust
+    /// # fn main() -> Result<(), cpf::ParseCPFError> {
+    /// # use cpf::CPF;
+    /// let cpf: CPF = "5120101".parse()?;
+    ///
+    /// assert_eq!(cpf.formatted().as_str(), "000.051.201-01");
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn formatted(&self) -> ArrayString<14> {
         let d = self
             .digits
@@ -110,29 +140,24 @@ impl CPF {
         fmt.push(d[10]);
         fmt
     }
+}
 
-    pub fn check_digits(&self) -> (&u8, &u8) {
-        (&self.digits[9], &self.digits[10])
+fn valid_digits(digits: &[u8; 11]) -> bool {
+    if digits.windows(2).all(|d| d[0] == d[1]) {
+        return false;
     }
 
-    fn valid(&self) -> bool {
-        if BLACK_LIST.contains(self.digits()) {
-            return false;
-        }
-
-        let check_digit1 = check_digit(&self.digits[0..9]);
-        let check_digit2 = check_digit(&self.digits[0..10]);
-
-        self.check_digits() == (&check_digit1, &check_digit2)
-    }
+    [9, 10]
+        .iter()
+        .all(|d| digits[*d] == check_digit(&digits[0..*d]))
 }
 
 fn check_digit(digits: &[u8]) -> u8 {
     let check_sum = digits
         .iter()
         .rev()
-        .enumerate()
-        .map(|(i, n)| (i + 2) * (*n as usize))
+        .zip(2..)
+        .map(|(i, n)| (i * n) as usize)
         .sum::<usize>();
 
     match check_sum % 11 {
@@ -141,9 +166,47 @@ fn check_digit(digits: &[u8]) -> u8 {
     }
 }
 
+fn parse<T: AsRef<str>>(cpf: T) -> Result<CPF, ParseCPFError> {
+    let cpf = cpf.as_ref();
+
+    let mut digits = ArrayVec::<u8, 11>::new();
+
+    for (i, digit) in cpf
+        .chars()
+        .filter_map(|c| c.to_digit(10).map(|d| d as u8))
+        .enumerate()
+    {
+        if i == 11 {
+            return Err(ParseCPFError::InvalidLength);
+        } else {
+            digits.push(digit);
+        }
+    }
+
+    if digits.len() < 3 {
+        return Err(ParseCPFError::InvalidLength);
+    }
+
+    for i in 0..digits.remaining_capacity() {
+        digits.insert(i, 0);
+    }
+
+    let digits = digits.into_inner().unwrap();
+
+    if valid_digits(&digits) {
+        Ok(CPF { digits })
+    } else {
+        Err(ParseCPFError::InvalidChecksum)
+    }
+}
+
 impl fmt::Display for CPF {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for c in self.formatted().chars() {
+        for c in self
+            .digits()
+            .iter()
+            .map(|d| from_digit((*d).into(), 10).unwrap())
+        {
             write!(f, "{}", c)?;
         }
         Ok(())
@@ -170,9 +233,8 @@ impl TryFrom<[u8; 11]> for CPF {
     type Error = ParseCPFError;
 
     fn try_from(value: [u8; 11]) -> Result<Self, Self::Error> {
-        let cpf = CPF { digits: value };
-        if cpf.valid() {
-            Ok(cpf)
+        if valid_digits(&value) {
+            Ok(CPF { digits: value })
         } else {
             Err(ParseCPFError::InvalidChecksum)
         }
@@ -188,18 +250,29 @@ impl fmt::Display for ParseCPFError {
     }
 }
 
+#[cfg(feature = "std")]
+extern crate std;
+#[cfg(feature = "std")]
+impl std::error::Error for ParseCPFError {}
+
 #[cfg(feature = "rand")]
-impl Distribution<CPF> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> CPF {
-        let digit = Uniform::from(1..9);
-        let mut digits = ArrayVec::<u8, 11>::new();
-        for _ in 0..9 {
-            digits.push(digit.sample(rng));
-        }
-        digits.push(check_digit(&digits.as_slice()));
-        digits.push(check_digit(&digits.as_slice()));
-        CPF {
-            digits: digits.into_inner().unwrap(),
+mod random {
+    use super::*;
+    use rand::distributions::{Distribution, Standard, Uniform};
+    use rand::Rng;
+
+    impl Distribution<CPF> for Standard {
+        fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> CPF {
+            let digit = Uniform::from(1..9);
+            let mut digits = ArrayVec::<u8, 11>::new();
+            for _ in 0..9 {
+                digits.push(digit.sample(rng));
+            }
+            digits.push(check_digit(&digits.as_slice()));
+            digits.push(check_digit(&digits.as_slice()));
+            CPF {
+                digits: digits.into_inner().unwrap(),
+            }
         }
     }
 }
@@ -234,6 +307,10 @@ mod tests {
         assert_eq!(cpf.unwrap().digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
 
         let cpf = parse("385.211.390-39");
+        assert!(cpf.is_ok());
+        assert_eq!(cpf.unwrap().digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
+
+        let cpf = "385.211.390-39".parse::<CPF>();
         assert!(cpf.is_ok());
         assert_eq!(cpf.unwrap().digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
     }
@@ -286,10 +363,18 @@ mod tests {
     }
 
     #[test]
+    fn it_display() {
+        extern crate std;
+        let cpf = parse("38521139039").unwrap();
+        assert_eq!(std::format!("{}", cpf), "38521139039");
+    }
+
+    #[test]
     #[cfg(feature = "rand")]
     fn it_generates_valid_numbers() {
         use rand;
-        let mut rng = rand::thread_rng();
-        assert!(valid(rand::thread_rng().gen::<CPF>().formatted()));
+        use rand::Rng;
+        let cpf = rand::thread_rng().gen::<CPF>();
+        assert!(valid_digits(cpf.digits()));
     }
 }

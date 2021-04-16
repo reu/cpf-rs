@@ -1,6 +1,6 @@
 [package]
 name = "cpf"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Rodrigo Navarro <rnavarro@rnavarro.com.br>"]
 edition = "2018"
 description = "Brazilian CPF parsing, validating and formatting library."
@@ -8,10 +8,13 @@ categories = ["no-std"]
 keywords = ["cpf", "Brasil", "Brazil"]
 documentation = "https://docs.rs/cpf"
 license = "MIT"
+repository = "https://github.com/reu/cpf-rs"
 
 [dependencies]
 arrayvec = "0.7"
-rand = { version = "0.8.3", optional = true }
+rand = { version = "0.8", optional = true }
 
 [features]
-default = []
+default = ["std"]
+std = []
+full = ["std", "rand"]
