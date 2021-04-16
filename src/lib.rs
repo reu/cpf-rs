@@ -8,14 +8,18 @@
 //! # fn main() -> Result<(), cpf::ParseCpfError> {
 //! use cpf::Cpf;
 //!
-//! // If all you need is validating a CPF number, use the `valid` function:
+//! // Use the `valid` function if all you need is validating a CPF number
 //! assert!(cpf::valid("38521139039"));
+//! assert!(!cpf::valid("38521139030"));
 //!
-//! // For formatting and additional metadata from the number, parse into the Cpf struct:
+//! // Parse into a Cpf struct if you need formatting and other metadata
 //! let cpf: Cpf = "38521139039".parse()?;
 //!
 //! assert_eq!(cpf.formatted().as_str(), "385.211.390-39");
 //! assert_eq!(cpf.digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
+//!
+//! // Note that the Cpf struct is guaranteed to always be valid
+//! assert!("38521139030".parse::<Cpf>().is_err());
 //! # Ok(())
 //! # }
 //! ```
@@ -55,7 +59,7 @@ use core::convert::TryFrom;
 use core::fmt;
 use core::str::FromStr;
 
-/// Validates a Cpf number.
+/// Validates a CPF number.
 /// ```
 /// use cpf;
 ///
@@ -72,7 +76,29 @@ pub enum ParseCpfError {
     InvalidChecksum,
 }
 
-/// A valid Cpf number.
+/// A valid CPF number.
+///
+/// Initialize a `Cpf` from a `&str` or an array of digits:
+/// ```rust
+/// # fn main() -> Result<(), cpf::ParseCpfError> {
+/// use core::convert::TryFrom;
+/// use cpf::Cpf;
+///
+/// let cpf1 = "385.211.390-39".parse::<Cpf>()?;
+/// let cpf2 = Cpf::try_from([3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9])?;
+/// assert_eq!(cpf1, cpf2);
+/// # Ok(())
+/// # }
+/// ```
+///
+/// Note that the `Cpf` struct can only be initialized after a successfully parse,
+/// so it is guaranteed to always be valid.
+/// ```rust
+/// use cpf::Cpf;
+///
+/// let cpf = "000.000.000-00".parse::<Cpf>();
+/// assert!(cpf.is_err());
+/// ```
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Cpf {
     digits: [u8; 11],
@@ -374,7 +400,9 @@ mod tests {
     fn it_generates_valid_numbers() {
         use rand;
         use rand::Rng;
-        let cpf = rand::thread_rng().gen::<Cpf>();
-        assert!(valid_digits(cpf.digits()));
+        for _ in 1..10000 {
+            let cpf = rand::thread_rng().gen::<Cpf>();
+            assert!(valid_digits(cpf.digits()));
+        }
     }
 }
