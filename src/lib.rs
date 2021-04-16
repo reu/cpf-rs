@@ -1,7 +1,7 @@
 #![no_std]
 
 //! # CPF
-//! 
+//!
 //! Brazilian CPF parsing, validating and formatting library.
 //!
 //! ```rust
