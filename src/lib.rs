@@ -70,7 +70,7 @@ pub fn valid<T: AsRef<str>>(cpf: T) -> bool {
     parse(cpf).is_ok()
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Hash)]
 pub enum ParseCpfError {
     InvalidLength,
     InvalidChecksum,
@@ -99,7 +99,7 @@ pub enum ParseCpfError {
 /// let cpf = "000.000.000-00".parse::<Cpf>();
 /// assert!(cpf.is_err());
 /// ```
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Cpf {
     digits: [u8; 11],
 }
