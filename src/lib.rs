@@ -14,7 +14,6 @@
 //!
 //! // Parse into a Cpf struct if you need formatting and other metadata
 //! let cpf: Cpf = "38521139039".parse()?;
-//!
 //! assert_eq!(cpf.formatted().as_str(), "385.211.390-39");
 //! assert_eq!(cpf.digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
 //!
@@ -40,7 +39,7 @@
 //! ```toml
 //! [dependencies]
 //! cpf = { version = "0.1", features = ["rand"] }
-//! rand = "0.8.3"
+//! rand = "0.8"
 //! ```
 //!
 //! ```rust
@@ -60,7 +59,7 @@ use core::fmt;
 use core::str::FromStr;
 
 /// Validates a CPF number.
-/// ```
+/// ```rust
 /// use cpf;
 ///
 /// assert!(cpf::valid("385.211.390-39"));
@@ -81,7 +80,7 @@ pub enum ParseCpfError {
 /// Initialize a `Cpf` from a `&str` or an array of digits:
 /// ```rust
 /// # fn main() -> Result<(), cpf::ParseCpfError> {
-/// use core::convert::TryFrom;
+/// # use core::convert::TryFrom;
 /// use cpf::Cpf;
 ///
 /// let cpf1 = "385.211.390-39".parse::<Cpf>()?;
@@ -111,7 +110,6 @@ impl Cpf {
     /// use cpf::Cpf;
     ///
     /// let cpf: Cpf = "385.211.390-39".parse()?;
-    ///
     /// assert_eq!(cpf.digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
     /// # Ok(())
     /// # }
@@ -126,7 +124,6 @@ impl Cpf {
     /// use cpf::Cpf;
     ///
     /// let cpf: Cpf = "38521139039".parse()?;
-    ///
     /// assert_eq!(cpf.formatted().as_str(), "385.211.390-39");
     /// # Ok(())
     /// # }
@@ -135,9 +132,9 @@ impl Cpf {
     /// Note that numbers with less than 11 digits will be padded by zeros.
     /// ```rust
     /// # fn main() -> Result<(), cpf::ParseCpfError> {
-    /// # use cpf::Cpf;
-    /// let cpf: Cpf = "5120101".parse()?;
+    /// use cpf::Cpf;
     ///
+    /// let cpf: Cpf = "5120101".parse()?;
     /// assert_eq!(cpf.formatted().as_str(), "000.051.201-01");
     /// # Ok(())
     /// # }
@@ -282,23 +279,33 @@ extern crate std;
 impl std::error::Error for ParseCpfError {}
 
 #[cfg(feature = "rand")]
-mod random {
-    use super::*;
-    use rand::distributions::{Distribution, Standard, Uniform};
-    use rand::Rng;
+use rand::{
+    distributions::{Distribution, Standard, Uniform},
+    Rng,
+};
 
-    impl Distribution<Cpf> for Standard {
-        fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Cpf {
-            let digit = Uniform::from(1..9);
-            let mut digits = ArrayVec::<u8, 11>::new();
-            for _ in 0..9 {
-                digits.push(digit.sample(rng));
-            }
-            digits.push(check_digit(&digits.as_slice()));
-            digits.push(check_digit(&digits.as_slice()));
-            Cpf {
-                digits: digits.into_inner().unwrap(),
-            }
+/// Random CPF generation
+///
+/// ```rust
+/// # #[cfg(feature = "rand")] {
+/// use cpf::Cpf;
+/// use rand::Rng;
+///
+/// let cpf: Cpf = rand::thread_rng().gen();
+/// # }
+/// ```
+#[cfg(feature = "rand")]
+impl Distribution<Cpf> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Cpf {
+        let digit = Uniform::from(1..9);
+        let mut digits = ArrayVec::<u8, 11>::new();
+        for _ in 0..9 {
+            digits.push(digit.sample(rng));
+        }
+        digits.push(check_digit(&digits.as_slice()));
+        digits.push(check_digit(&digits.as_slice()));
+        Cpf {
+            digits: digits.into_inner().unwrap(),
         }
     }
 }
@@ -328,11 +335,7 @@ mod tests {
 
     #[test]
     fn it_parses() {
-        let cpf = parse("38521139039");
-        assert!(cpf.is_ok());
-        assert_eq!(cpf.unwrap().digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
-
-        let cpf = parse("385.211.390-39");
+        let cpf = "38521139039".parse::<Cpf>();
         assert!(cpf.is_ok());
         assert_eq!(cpf.unwrap().digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
 
@@ -359,39 +362,39 @@ mod tests {
 
     #[test]
     fn it_fails_to_parse_numbers_that_dont_match_the_min_length() {
-        let cpf = parse("01");
+        let cpf = "01".parse::<Cpf>();
         assert!(cpf.is_err());
         assert_eq!(cpf.unwrap_err(), ParseCpfError::InvalidLength);
 
-        let cpf = parse("0");
+        let cpf = "0".parse::<Cpf>();
         assert!(cpf.is_err());
         assert_eq!(cpf.unwrap_err(), ParseCpfError::InvalidLength);
     }
 
     #[test]
     fn it_fails_to_parse_numbers_with_more_than_eleven_digits() {
-        let cpf = parse("138521139039");
+        let cpf = "138521139039".parse::<Cpf>();
         assert!(cpf.is_err());
         assert_eq!(cpf.unwrap_err(), ParseCpfError::InvalidLength);
     }
 
     #[test]
     fn it_fails_on_invalid_checksums() {
-        let cpf = parse("38521139038");
+        let cpf = "38521139038".parse::<Cpf>();
         assert!(cpf.is_err());
         assert_eq!(cpf.unwrap_err(), ParseCpfError::InvalidChecksum);
     }
 
     #[test]
     fn it_formats() {
-        let cpf = parse("38521139039").unwrap();
+        let cpf = "38521139039".parse::<Cpf>().unwrap();
         assert_eq!(cpf.formatted().as_str(), "385.211.390-39");
     }
 
     #[test]
     fn it_display() {
         extern crate std;
-        let cpf = parse("38521139039").unwrap();
+        let cpf = "38521139039".parse::<Cpf>().unwrap();
         assert_eq!(std::format!("{}", cpf), "38521139039");
     }
 

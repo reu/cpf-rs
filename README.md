@@ -5,14 +5,18 @@ Brazilian CPF parsing, validating and formatting library.
 ```rust
 use cpf::Cpf;
 
-// If all you need is validating a CPF number, use the `valid` function:
+// Use the `valid` function if all you need is validating a CPF number
 assert!(cpf::valid("38521139039"));
+assert!(!cpf::valid("38521139030"));
 
-// For formatting and additional metadata from the number, parse into a `Cpf` struct:
-let cpf: Cpf = "38521139039".parse().unwrap();
+// Parse into a Cpf struct if you need formatting and other metadata
+let cpf: Cpf = "38521139039".parse()?;
 
 assert_eq!(cpf.formatted().as_str(), "385.211.390-39");
 assert_eq!(cpf.digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
+
+// Note that the Cpf struct is guaranteed to always be valid
+assert!("38521139030".parse::<Cpf>().is_err());
 ```
 
 ## no_std support
