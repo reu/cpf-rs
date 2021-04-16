@@ -5,14 +5,14 @@
 //! Brazilian CPF parsing, validating and formatting library.
 //!
 //! ```rust
-//! # fn main() -> Result<(), cpf::ParseCPFError> {
-//! use cpf::CPF;
+//! # fn main() -> Result<(), cpf::ParseCpfError> {
+//! use cpf::Cpf;
 //!
 //! // If all you need is validating a CPF number, use the `valid` function:
 //! assert!(cpf::valid("38521139039"));
 //!
-//! // For formatting and additional metadata from the number, parse into the CPF struct:
-//! let cpf: CPF = "38521139039".parse()?;
+//! // For formatting and additional metadata from the number, parse into the Cpf struct:
+//! let cpf: Cpf = "38521139039".parse()?;
 //!
 //! assert_eq!(cpf.formatted().as_str(), "385.211.390-39");
 //! assert_eq!(cpf.digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
@@ -41,11 +41,11 @@
 //!
 //! ```rust
 //! # #[cfg(feature = "rand")] {
-//! use cpf::CPF;
+//! use cpf::Cpf;
 //! use rand;
 //! use rand::Rng;
 //!
-//! let cpf: CPF = rand::thread_rng().gen();
+//! let cpf: Cpf = rand::thread_rng().gen();
 //! # }
 //! ```
 
@@ -55,7 +55,7 @@ use core::convert::TryFrom;
 use core::fmt;
 use core::str::FromStr;
 
-/// Validates a CPF number.
+/// Validates a Cpf number.
 /// ```
 /// use cpf;
 ///
@@ -67,24 +67,24 @@ pub fn valid<T: AsRef<str>>(cpf: T) -> bool {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum ParseCPFError {
+pub enum ParseCpfError {
     InvalidLength,
     InvalidChecksum,
 }
 
-/// A valid CPF number.
+/// A valid Cpf number.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct CPF {
+pub struct Cpf {
     digits: [u8; 11],
 }
 
-impl CPF {
-    /// The CPF digits.
+impl Cpf {
+    /// The Cpf digits.
     /// ```rust
-    /// # fn main() -> Result<(), cpf::ParseCPFError> {
-    /// use cpf::CPF;
+    /// # fn main() -> Result<(), cpf::ParseCpfError> {
+    /// use cpf::Cpf;
     ///
-    /// let cpf: CPF = "385.211.390-39".parse()?;
+    /// let cpf: Cpf = "385.211.390-39".parse()?;
     ///
     /// assert_eq!(cpf.digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
     /// # Ok(())
@@ -94,12 +94,12 @@ impl CPF {
         &self.digits
     }
 
-    /// Formats a CPF number.
+    /// Formats a Cpf number.
     /// ```rust
-    /// # fn main() -> Result<(), cpf::ParseCPFError> {
-    /// use cpf::CPF;
+    /// # fn main() -> Result<(), cpf::ParseCpfError> {
+    /// use cpf::Cpf;
     ///
-    /// let cpf: CPF = "38521139039".parse()?;
+    /// let cpf: Cpf = "38521139039".parse()?;
     ///
     /// assert_eq!(cpf.formatted().as_str(), "385.211.390-39");
     /// # Ok(())
@@ -108,9 +108,9 @@ impl CPF {
     ///
     /// Note that numbers with less than 11 digits will be padded by zeros.
     /// ```rust
-    /// # fn main() -> Result<(), cpf::ParseCPFError> {
-    /// # use cpf::CPF;
-    /// let cpf: CPF = "5120101".parse()?;
+    /// # fn main() -> Result<(), cpf::ParseCpfError> {
+    /// # use cpf::Cpf;
+    /// let cpf: Cpf = "5120101".parse()?;
     ///
     /// assert_eq!(cpf.formatted().as_str(), "000.051.201-01");
     /// # Ok(())
@@ -166,7 +166,7 @@ fn check_digit(digits: &[u8]) -> u8 {
     }
 }
 
-fn parse<T: AsRef<str>>(cpf: T) -> Result<CPF, ParseCPFError> {
+fn parse<T: AsRef<str>>(cpf: T) -> Result<Cpf, ParseCpfError> {
     let cpf = cpf.as_ref();
 
     let mut digits = ArrayVec::<u8, 11>::new();
@@ -177,14 +177,14 @@ fn parse<T: AsRef<str>>(cpf: T) -> Result<CPF, ParseCPFError> {
         .enumerate()
     {
         if i == 11 {
-            return Err(ParseCPFError::InvalidLength);
+            return Err(ParseCpfError::InvalidLength);
         } else {
             digits.push(digit);
         }
     }
 
     if digits.len() < 3 {
-        return Err(ParseCPFError::InvalidLength);
+        return Err(ParseCpfError::InvalidLength);
     }
 
     for i in 0..digits.remaining_capacity() {
@@ -194,13 +194,13 @@ fn parse<T: AsRef<str>>(cpf: T) -> Result<CPF, ParseCPFError> {
     let digits = digits.into_inner().unwrap();
 
     if valid_digits(&digits) {
-        Ok(CPF { digits })
+        Ok(Cpf { digits })
     } else {
-        Err(ParseCPFError::InvalidChecksum)
+        Err(ParseCpfError::InvalidChecksum)
     }
 }
 
-impl fmt::Display for CPF {
+impl fmt::Display for Cpf {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for c in self
             .digits()
@@ -213,39 +213,39 @@ impl fmt::Display for CPF {
     }
 }
 
-impl FromStr for CPF {
-    type Err = ParseCPFError;
+impl FromStr for Cpf {
+    type Err = ParseCpfError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         parse(s)
     }
 }
 
-impl TryFrom<&str> for CPF {
-    type Error = ParseCPFError;
+impl TryFrom<&str> for Cpf {
+    type Error = ParseCpfError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         parse(value)
     }
 }
 
-impl TryFrom<[u8; 11]> for CPF {
-    type Error = ParseCPFError;
+impl TryFrom<[u8; 11]> for Cpf {
+    type Error = ParseCpfError;
 
     fn try_from(value: [u8; 11]) -> Result<Self, Self::Error> {
         if valid_digits(&value) {
-            Ok(CPF { digits: value })
+            Ok(Cpf { digits: value })
         } else {
-            Err(ParseCPFError::InvalidChecksum)
+            Err(ParseCpfError::InvalidChecksum)
         }
     }
 }
 
-impl fmt::Display for ParseCPFError {
+impl fmt::Display for ParseCpfError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ParseCPFError::InvalidChecksum => "invalid CPF checksum".fmt(f),
-            ParseCPFError::InvalidLength => "invalid CPF lenght".fmt(f),
+            ParseCpfError::InvalidChecksum => "invalid Cpf checksum".fmt(f),
+            ParseCpfError::InvalidLength => "invalid Cpf lenght".fmt(f),
         }
     }
 }
@@ -253,7 +253,7 @@ impl fmt::Display for ParseCPFError {
 #[cfg(feature = "std")]
 extern crate std;
 #[cfg(feature = "std")]
-impl std::error::Error for ParseCPFError {}
+impl std::error::Error for ParseCpfError {}
 
 #[cfg(feature = "rand")]
 mod random {
@@ -261,8 +261,8 @@ mod random {
     use rand::distributions::{Distribution, Standard, Uniform};
     use rand::Rng;
 
-    impl Distribution<CPF> for Standard {
-        fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> CPF {
+    impl Distribution<Cpf> for Standard {
+        fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Cpf {
             let digit = Uniform::from(1..9);
             let mut digits = ArrayVec::<u8, 11>::new();
             for _ in 0..9 {
@@ -270,7 +270,7 @@ mod random {
             }
             digits.push(check_digit(&digits.as_slice()));
             digits.push(check_digit(&digits.as_slice()));
-            CPF {
+            Cpf {
                 digits: digits.into_inner().unwrap(),
             }
         }
@@ -310,18 +310,18 @@ mod tests {
         assert!(cpf.is_ok());
         assert_eq!(cpf.unwrap().digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
 
-        let cpf = "385.211.390-39".parse::<CPF>();
+        let cpf = "385.211.390-39".parse::<Cpf>();
         assert!(cpf.is_ok());
         assert_eq!(cpf.unwrap().digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
     }
 
     #[test]
     fn it_initializes_with_digits() {
-        let cpf = CPF::try_from([3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
+        let cpf = Cpf::try_from([3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
         assert!(cpf.is_ok());
         assert_eq!(cpf.unwrap().digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
 
-        let cpf = CPF::try_from([4, 4, 7, 2, 1, 8, 4, 9, 8, 1, 9]);
+        let cpf = Cpf::try_from([4, 4, 7, 2, 1, 8, 4, 9, 8, 1, 9]);
         assert!(cpf.is_err());
     }
 
@@ -335,25 +335,25 @@ mod tests {
     fn it_fails_to_parse_numbers_that_dont_match_the_min_length() {
         let cpf = parse("01");
         assert!(cpf.is_err());
-        assert_eq!(cpf.unwrap_err(), ParseCPFError::InvalidLength);
+        assert_eq!(cpf.unwrap_err(), ParseCpfError::InvalidLength);
 
         let cpf = parse("0");
         assert!(cpf.is_err());
-        assert_eq!(cpf.unwrap_err(), ParseCPFError::InvalidLength);
+        assert_eq!(cpf.unwrap_err(), ParseCpfError::InvalidLength);
     }
 
     #[test]
     fn it_fails_to_parse_numbers_with_more_than_eleven_digits() {
         let cpf = parse("138521139039");
         assert!(cpf.is_err());
-        assert_eq!(cpf.unwrap_err(), ParseCPFError::InvalidLength);
+        assert_eq!(cpf.unwrap_err(), ParseCpfError::InvalidLength);
     }
 
     #[test]
     fn it_fails_on_invalid_checksums() {
         let cpf = parse("38521139038");
         assert!(cpf.is_err());
-        assert_eq!(cpf.unwrap_err(), ParseCPFError::InvalidChecksum);
+        assert_eq!(cpf.unwrap_err(), ParseCpfError::InvalidChecksum);
     }
 
     #[test]
@@ -374,7 +374,7 @@ mod tests {
     fn it_generates_valid_numbers() {
         use rand;
         use rand::Rng;
-        let cpf = rand::thread_rng().gen::<CPF>();
+        let cpf = rand::thread_rng().gen::<Cpf>();
         assert!(valid_digits(cpf.digits()));
     }
 }

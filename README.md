@@ -1,15 +1,15 @@
-# CPF
+# cpf-rs
 
 Brazilian CPF parsing, validating and formatting library.
 
 ```rust
-use cpf::CPF;
+use cpf::Cpf;
 
 // If all you need is validating a CPF number, use the `valid` function:
 assert!(cpf::valid("38521139039"));
 
-// For formatting and additional metadata from the number, parse into the CPF struct:
-let cpf: CPF = "38521139039".parse().unwrap();
+// For formatting and additional metadata from the number, parse into a `Cpf` struct:
+let cpf: Cpf = "38521139039".parse().unwrap();
 
 assert_eq!(cpf.formatted().as_str(), "385.211.390-39");
 assert_eq!(cpf.digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
@@ -35,9 +35,9 @@ rand = "0.8"
 ```
 
 ```rust
-use cpf::CPF;
+use cpf::Cpf;
 use rand;
 use rand::Rng;
 
-let cpf: CPF = rand::thread_rng().gen();
+let cpf: Cpf = rand::thread_rng().gen();
 ```
