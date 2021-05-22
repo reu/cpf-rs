@@ -16,7 +16,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --features full
+          args: --all-features
 
   test:
     name: Tests
@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         features:
-          - --features full
+          - --all-features
           - --no-default-features
     steps:
       - uses: actions/checkout@v2
@@ -68,4 +68,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --features full -- -D warnings
+          args: --all-features -- -D warnings
