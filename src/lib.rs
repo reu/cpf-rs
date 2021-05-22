@@ -9,8 +9,9 @@
 //! use cpf::Cpf;
 //!
 //! // Use the `valid` function if all you need is validating a CPF number
+//! assert!(cpf::valid("385.211.390-39"));
 //! assert!(cpf::valid("38521139039"));
-//! assert!(!cpf::valid("38521139030"));
+//! assert!(!cpf::valid("000.000.000-00"));
 //!
 //! // Parse into a Cpf struct if you need formatting and other metadata
 //! let cpf: Cpf = "38521139039".parse()?;
@@ -18,7 +19,7 @@
 //! assert_eq!(cpf.digits(), &[3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
 //!
 //! // Note that the Cpf struct is guaranteed to always be valid
-//! assert!("38521139030".parse::<Cpf>().is_err());
+//! assert!("000.000.000-00".parse::<Cpf>().is_err());
 //! # Ok(())
 //! # }
 //! ```
@@ -63,7 +64,7 @@ use core::str::FromStr;
 /// use cpf;
 ///
 /// assert!(cpf::valid("385.211.390-39"));
-/// assert!(!cpf::valid("385.211.390-49"));
+/// assert!(!cpf::valid("000.000.000-00"));
 /// ```
 pub fn valid<T: AsRef<str>>(cpf: T) -> bool {
     parse(cpf).is_ok()
@@ -322,15 +323,15 @@ mod tests {
 
     #[test]
     fn it_disallow_same_digit_numbers() {
-        assert!(!valid("11111111111"));
-        assert!(!valid("22222222222"));
-        assert!(!valid("33333333333"));
-        assert!(!valid("44444444444"));
-        assert!(!valid("55555555555"));
-        assert!(!valid("66666666666"));
-        assert!(!valid("77777777777"));
-        assert!(!valid("88888888888"));
-        assert!(!valid("99999999999"));
+        assert!(!valid("111.111.111-11"));
+        assert!(!valid("222.222.222-22"));
+        assert!(!valid("333.333.333-33"));
+        assert!(!valid("444.444.444-44"));
+        assert!(!valid("555.555.555-55"));
+        assert!(!valid("666.666.666-66"));
+        assert!(!valid("777.777.777-77"));
+        assert!(!valid("888.888.888-88"));
+        assert!(!valid("999.999.999-99"));
     }
 
     #[test]
