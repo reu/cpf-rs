@@ -32,7 +32,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cpf = { version = "0.1", default-features = false }
+//! cpf = { version = "0.2", default-features = false }
 //! ```
 //!
 //! ## Random CPF generation support
@@ -41,7 +41,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! cpf = { version = "0.1", features = ["rand"] }
+//! cpf = { version = "0.2", features = ["rand"] }
 //! rand = "0.8"
 //! ```
 //!

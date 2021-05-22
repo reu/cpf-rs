@@ -26,7 +26,7 @@ The library can be used on no_std environments by disabling the `std` flag:
 
 ```toml
 [dependencies]
-cpf = { version = "0.1", default-features = false }
+cpf = { version = "0.2", default-features = false }
 ```
 
 ## Random CPF generation support
@@ -35,7 +35,7 @@ The `rand` feature flag enables random CPF generation:
 
 ```toml
 [dependencies]
-cpf = { version = "0.1", features = ["rand"] }
+cpf = { version = "0.2", features = ["rand"] }
 rand = "0.8"
 ```
 
