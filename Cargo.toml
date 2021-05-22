@@ -12,9 +12,9 @@ repository = "https://github.com/reu/cpf-rs"
 
 [package.metadata.docs.rs]
 all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-arrayvec = "0.7"
 rand = { version = "0.8", optional = true }
 
 [features]
