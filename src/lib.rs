@@ -28,7 +28,8 @@
 //!
 //! ## no_std support
 //!
-//! The library can be used on no_std environments by disabling the `std` flag:
+//! The library makes no dinamic allocation and can be used on no_std
+//! environments by disabling the `std` flag:
 //!
 //! ```toml
 //! [dependencies]
