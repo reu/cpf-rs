@@ -298,7 +298,7 @@ use rand::{
 #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
 impl Distribution<Cpf> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Cpf {
-        let digit = Uniform::from(1..9);
+        let digit = Uniform::from(0..=9);
         let mut digits: [u8; 11] = [0; 11];
         for d in digits.iter_mut().take(9) {
             *d = digit.sample(rng);
