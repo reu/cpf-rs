@@ -398,12 +398,21 @@ mod tests {
     #[test]
     #[cfg(feature = "rand")]
     fn it_generates_valid_numbers() {
-        extern crate std;
-        use rand;
-        use rand::Rng;
+        use rand::{rngs::SmallRng, Rng, SeedableRng};
+        let mut rng = SmallRng::seed_from_u64(0);
         for _ in 1..10000 {
-            let cpf = rand::thread_rng().gen::<Cpf>();
+            let cpf = rng.gen::<Cpf>();
             assert!(valid(cpf));
         }
+    }
+
+    #[test]
+    #[cfg(feature = "rand")]
+    fn it_generates_different_numbers() {
+        use rand::{rngs::SmallRng, Rng, SeedableRng};
+        let mut rng = SmallRng::seed_from_u64(0);
+        let cpf1 = rng.gen::<Cpf>();
+        let cpf2 = rng.gen::<Cpf>();
+        assert_ne!(cpf1, cpf2);
     }
 }

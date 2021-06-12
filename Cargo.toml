@@ -15,7 +15,10 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-rand = { version = "0.8", optional = true }
+rand = { version = "0.8", optional = true, default-features = false }
+
+[dev-dependencies]
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng", "small_rng"] }
 
 [features]
 default = ["std"]
