@@ -16,7 +16,8 @@
 //!
 //! // Parse into a Cpf struct if you need formatting or other metadata
 //! let cpf: Cpf = "38521139039".parse()?;
-//! assert_eq!(format!("{}", cpf), "385.211.390-39");
+//! assert_eq!(format!("{cpf}"), "385.211.390-39");
+//! assert_eq!(cpf.as_str(), "38521139039");
 //! assert_eq!(cpf.digits(), [3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
 //!
 //! // Note that the Cpf struct is guaranteed to always be valid
@@ -52,7 +53,7 @@
 //! use rand;
 //! use rand::Rng;
 //!
-//! let cpf: Cpf = rand::thread_rng().gen();
+//! let cpf = rand::thread_rng().gen::<Cpf>();
 //! # }
 //! ```
 
