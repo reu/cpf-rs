@@ -121,11 +121,7 @@ impl Cpf {
     /// # }
     /// ```
     pub fn digits(&self) -> [u8; 11] {
-        let mut digits: [u8; 11] = [0; 11];
-        for (i, digit) in self.digits.iter().enumerate() {
-            digits[i] = digit - 48;
-        }
-        digits
+        self.digits.map(|digit| digit - 48)
     }
 
     /// Returns the (unformatted) CPF number.
@@ -155,13 +151,8 @@ impl Cpf {
     }
 
     fn from_valid_digits(digits: [u8; 11]) -> Cpf {
-        let mut ascii_digits: [u8; 11] = [48; 11];
-        for (i, digit) in digits.iter().enumerate() {
-            ascii_digits[i] = digit + 48;
-        }
-
         Cpf {
-            digits: ascii_digits,
+            digits: digits.map(|digit| digit + 48),
         }
     }
 }
