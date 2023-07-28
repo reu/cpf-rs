@@ -190,16 +190,18 @@ fn check_digit(digits: &[u8]) -> u8 {
 }
 
 fn parse<T: AsRef<str>>(cpf: T) -> Result<Cpf, ParseCpfError> {
-    let cpf = cpf.as_ref();
+    try_from_iter(
+        cpf.as_ref()
+            .chars()
+            .filter_map(|c| c.to_digit(10).map(|d| d as u8))
+            .rev(),
+    )
+}
 
+fn try_from_iter(iter: impl Iterator<Item = u8>) -> Result<Cpf, ParseCpfError> {
     let mut digits: [u8; 11] = [0; 11];
 
-    for (i, digit) in cpf
-        .chars()
-        .filter_map(|c| c.to_digit(10).map(|d| d as u8))
-        .rev()
-        .enumerate()
-    {
+    for (i, digit) in iter.enumerate() {
         if i == 11 {
             return Err(ParseCpfError::InvalidLength);
         } else {
@@ -207,7 +209,13 @@ fn parse<T: AsRef<str>>(cpf: T) -> Result<Cpf, ParseCpfError> {
         }
     }
 
-    if digits.iter().take_while(|digit| **digit == 0).count() > 9 {
+    if digits
+        .iter()
+        .take_while(|digit| **digit == 0)
+        .take(10)
+        .count()
+        > 9
+    {
         Err(ParseCpfError::InvalidLength)
     } else if valid_checksum(&digits) {
         Ok(Cpf::from_valid_digits(digits))
@@ -261,6 +269,14 @@ impl TryFrom<[u8; 11]> for Cpf {
         } else {
             Err(ParseCpfError::InvalidChecksum)
         }
+    }
+}
+
+impl TryFrom<&[u8]> for Cpf {
+    type Error = ParseCpfError;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        try_from_iter(value.iter().copied().rev())
     }
 }
 
@@ -351,6 +367,19 @@ mod tests {
         assert_eq!(cpf.unwrap().digits(), [3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
 
         let cpf = Cpf::try_from([4, 4, 7, 2, 1, 8, 4, 9, 8, 1, 9]);
+        assert!(cpf.is_err());
+    }
+
+    #[test]
+    fn it_initializes_with_digits_on_heap() {
+        extern crate std;
+        use std::vec;
+
+        let cpf = Cpf::try_from(&vec![3_u8, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9][..]);
+        assert!(cpf.is_ok());
+        assert_eq!(cpf.unwrap().digits(), [3, 8, 5, 2, 1, 1, 3, 9, 0, 3, 9]);
+
+        let cpf = Cpf::try_from(&vec![4_u8, 4, 7, 2, 1, 8, 4, 9, 8, 1, 9][..]);
         assert!(cpf.is_err());
     }
 
