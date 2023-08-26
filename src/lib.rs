@@ -416,3 +416,159 @@ mod tests {
         assert_ne!(cpf1, cpf2);
     }
 }
+
+#[cfg(feature = "serde")]
+mod __serde {
+    use core::fmt;
+
+    use serde::de::{Error, Visitor};
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    use super::*;
+
+    impl<'de> Deserialize<'de> for Cpf {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            struct CpfVisitor;
+
+            impl<'de> Visitor<'de> for CpfVisitor {
+                type Value = Cpf;
+
+                fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                    formatter.write_str("a string containing a valid Cpf")
+                }
+
+                fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+                where
+                    E: Error,
+                {
+                    v.parse().map_err(Error::custom)
+                }
+
+                fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+                where
+                    E: Error,
+                {
+                    v.parse().map_err(Error::custom)
+                }
+
+                #[cfg(feature = "std")]
+                fn visit_string<E>(self, v: std::string::String) -> Result<Self::Value, E>
+                where
+                    E: Error,
+                {
+                    v.parse().map_err(Error::custom)
+                }
+            }
+
+            deserializer.deserialize_str(CpfVisitor)
+        }
+    }
+
+    impl Serialize for Cpf {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            self.as_str().serialize(serializer)
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use serde::de::value::Error;
+        use serde::de::IntoDeserializer;
+
+        use super::*;
+
+        #[test]
+        fn it_deserializes_valid_str() {
+            use serde::de::value::StrDeserializer;
+
+            let de: StrDeserializer<'_, Error> = "385.211.390-39".into_deserializer();
+            assert!(Cpf::deserialize(de).is_ok());
+        }
+
+        #[test]
+        fn it_deserializes_invalid_str() {
+            use serde::de::value::StrDeserializer;
+
+            let de: StrDeserializer<'_, Error> = "385.211.390-49".into_deserializer();
+            assert!(Cpf::deserialize(de).is_err());
+        }
+
+        #[test]
+        #[cfg(feature = "std")]
+        fn it_deserializes_valid_borrowed_cow() {
+            use std::borrow::Cow;
+
+            use serde::de::value::CowStrDeserializer;
+
+            let cpf = "385.211.390-39";
+            let de: CowStrDeserializer<'_, Error> = Cow::from(cpf).into_deserializer();
+            assert!(Cpf::deserialize(de).is_ok());
+        }
+
+        #[test]
+        #[cfg(feature = "std")]
+        fn it_deserializes_invalid_borrowed_cow() {
+            use std::borrow::Cow;
+
+            use serde::de::value::CowStrDeserializer;
+
+            let cpf = "385.211.390-49";
+            let de: CowStrDeserializer<'_, Error> = Cow::from(cpf).into_deserializer();
+            assert!(Cpf::deserialize(de).is_err());
+        }
+
+        #[test]
+        #[cfg(feature = "std")]
+        fn it_deserializes_valid_owned_cow() {
+            use std::borrow::Cow;
+            use std::string::ToString;
+
+            use serde::de::value::CowStrDeserializer;
+
+            let cpf = "385.211.390-39".to_string();
+            let de: CowStrDeserializer<'_, Error> = Cow::from(cpf).into_deserializer();
+            assert!(Cpf::deserialize(de).is_ok());
+        }
+
+        #[test]
+        #[cfg(feature = "std")]
+        fn it_deserializes_invalid_owned_cow() {
+            use std::borrow::Cow;
+            use std::string::ToString;
+
+            use serde::de::value::CowStrDeserializer;
+
+            let cpf = "385.211.390-49".to_string();
+            let de: CowStrDeserializer<'_, Error> = Cow::from(cpf).into_deserializer();
+            assert!(Cpf::deserialize(de).is_err());
+        }
+
+        #[test]
+        #[cfg(feature = "std")]
+        fn it_deserializes_valid_string() {
+            use std::string::ToString;
+
+            use serde::de::value::StringDeserializer;
+
+            let de: StringDeserializer<Error> = "385.211.390-39".to_string().into_deserializer();
+            assert!(Cpf::deserialize(de).is_ok());
+        }
+
+        #[test]
+        #[cfg(feature = "std")]
+        fn it_deserializes_invalid_string() {
+            use std::string::ToString;
+
+            use serde::de::value::StringDeserializer;
+
+            let de: StringDeserializer<Error> = "385.211.390-49".to_string().into_deserializer();
+            assert!(Cpf::deserialize(de).is_err());
+        }
+    }
+}
