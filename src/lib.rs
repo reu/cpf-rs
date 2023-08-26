@@ -104,7 +104,7 @@ pub enum ParseCpfError {
 /// let cpf = "385.211.390-39".parse::<Cpf>().unwrap();
 /// assert!(cpf::valid(cpf));
 /// ```
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct Cpf {
     digits: [u8; 11],
 }
@@ -219,6 +219,14 @@ fn try_from_iter(iter: impl Iterator<Item = u8>) -> Result<Cpf, ParseCpfError> {
 impl AsRef<str> for Cpf {
     fn as_ref(&self) -> &str {
         self.as_str()
+    }
+}
+
+impl fmt::Debug for Cpf {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_tuple("Cpf")
+            .field(&format_args!("{}", self))
+            .finish()
     }
 }
 
