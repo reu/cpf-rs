@@ -76,6 +76,7 @@ pub fn valid<T: AsRef<str>>(cpf: T) -> bool {
 pub enum ParseCpfError {
     InvalidLength,
     InvalidChecksum,
+    InvalidDigit,
 }
 
 /// A valid CPF number.
@@ -193,12 +194,19 @@ fn parse<T: AsRef<str>>(cpf: T) -> Result<Cpf, ParseCpfError> {
 fn try_from_iter(iter: impl Iterator<Item = u8>) -> Result<Cpf, ParseCpfError> {
     let mut digits: [u8; 11] = [0; 11];
 
-    for (i, digit) in iter.enumerate() {
+    for (i, digit) in iter
+        .map(|digit| {
+            matches!(digit, 0..=9)
+                .then_some(digit)
+                .ok_or(ParseCpfError::InvalidDigit)
+        })
+        .enumerate()
+    {
         if i == 11 {
             return Err(ParseCpfError::InvalidLength);
-        } else {
-            digits[10 - i] = digit
         }
+
+        digits[10 - i] = digit?;
     }
 
     if digits
@@ -208,12 +216,14 @@ fn try_from_iter(iter: impl Iterator<Item = u8>) -> Result<Cpf, ParseCpfError> {
         .count()
         > 9
     {
-        Err(ParseCpfError::InvalidLength)
-    } else if valid_checksum(&digits) {
-        Ok(Cpf::from_valid_digits(digits))
-    } else {
-        Err(ParseCpfError::InvalidChecksum)
+        return Err(ParseCpfError::InvalidLength);
     }
+
+    if !valid_checksum(&digits) {
+        return Err(ParseCpfError::InvalidChecksum);
+    }
+
+    Ok(Cpf::from_valid_digits(digits))
 }
 
 impl AsRef<str> for Cpf {
@@ -284,7 +294,8 @@ impl fmt::Display for ParseCpfError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ParseCpfError::InvalidChecksum => "invalid Cpf checksum".fmt(f),
-            ParseCpfError::InvalidLength => "invalid Cpf lenght".fmt(f),
+            ParseCpfError::InvalidLength => "invalid Cpf length".fmt(f),
+            ParseCpfError::InvalidDigit => "invalid Cpf digit".fmt(f),
         }
     }
 }
@@ -368,6 +379,16 @@ mod tests {
 
         let cpf = Cpf::try_from([4, 4, 7, 2, 1, 8, 4, 9, 8, 1, 9]);
         assert!(cpf.is_err());
+    }
+
+    #[test]
+    fn it_fails_with_invalid_digits() {
+        let x = [3u8, 11, 9, 0, 8 + 22, 8, 5, 6, 33, 3, 2];
+
+        assert_eq!(
+            Cpf::try_from(&x[..]).unwrap_err(),
+            ParseCpfError::InvalidDigit
+        );
     }
 
     #[test]
