@@ -1,6 +1,6 @@
 [package]
 name = "cpf"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Rodrigo Navarro <rnavarro@rnavarro.com.br>"]
 edition = "2018"
 description = "Brazilian CPF parsing, validating and formatting library."
