@@ -151,6 +151,18 @@ impl Cpf {
         unsafe { from_utf8_unchecked(&self.digits) }
     }
 
+    /// Creates a CPF number from an valid ASCII string.
+    pub fn from_ascii(cpf: &[u8]) -> Result<Cpf, ParseCpfError> {
+        try_from_iter(
+            cpf.iter()
+                .filter_map(|digit| match digit.overflowing_sub(48) {
+                    (digit, false) if valid_digit(&digit) => Some(digit),
+                    _ => None,
+                })
+                .rev(),
+        )
+    }
+
     fn from_valid_digits(digits: [u8; 11]) -> Cpf {
         Cpf {
             digits: digits.map(|digit| digit + 48),
@@ -385,6 +397,18 @@ mod tests {
 
         let cpf = Cpf::try_from([4, 4, 7, 2, 1, 8, 4, 9, 8, 1, 9]);
         assert!(cpf.is_err());
+    }
+
+    #[test]
+    fn it_initializes_from_ascii() {
+        assert_eq!(
+            Cpf::from_str("385.211.390-39").unwrap(),
+            Cpf::from_ascii("38521139039".as_bytes()).unwrap()
+        );
+        assert_eq!(
+            Cpf::from_str("385.211.390-39").unwrap(),
+            Cpf::from_ascii("385.211.390-39".as_bytes()).unwrap()
+        );
     }
 
     #[test]
