@@ -158,6 +158,10 @@ impl Cpf {
     }
 }
 
+fn valid_digit(digit: &u8) -> bool {
+    (0..=9).contains(digit)
+}
+
 fn valid_checksum(digits: &[u8; 11]) -> bool {
     if digits.windows(2).all(|d| d[0] == d[1]) {
         return false;
@@ -196,7 +200,7 @@ fn try_from_iter(iter: impl Iterator<Item = u8>) -> Result<Cpf, ParseCpfError> {
 
     for (i, digit) in iter
         .map(|digit| {
-            matches!(digit, 0..=9)
+            valid_digit(&digit)
                 .then_some(digit)
                 .ok_or(ParseCpfError::InvalidDigit)
         })
@@ -274,7 +278,9 @@ impl TryFrom<[u8; 11]> for Cpf {
     type Error = ParseCpfError;
 
     fn try_from(value: [u8; 11]) -> Result<Self, Self::Error> {
-        if valid_checksum(&value) {
+        if !value.iter().all(valid_digit) {
+            Err(ParseCpfError::InvalidDigit)
+        } else if valid_checksum(&value) {
             Ok(Cpf::from_valid_digits(value))
         } else {
             Err(ParseCpfError::InvalidChecksum)
@@ -383,10 +389,13 @@ mod tests {
 
     #[test]
     fn it_fails_with_invalid_digits() {
-        let x = [3u8, 11, 9, 0, 8 + 22, 8, 5, 6, 33, 3, 2];
-
+        let digits = [3u8, 11, 9, 0, 8 + 22, 8, 5, 6, 33, 3, 2];
         assert_eq!(
-            Cpf::try_from(&x[..]).unwrap_err(),
+            Cpf::try_from(digits).unwrap_err(),
+            ParseCpfError::InvalidDigit
+        );
+        assert_eq!(
+            Cpf::try_from(&digits[..]).unwrap_err(),
             ParseCpfError::InvalidDigit
         );
     }
