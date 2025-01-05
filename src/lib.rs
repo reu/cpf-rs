@@ -176,7 +176,7 @@ fn check_digit(digits: &[u8]) -> u8 {
     let check_sum = digits
         .iter()
         .rev()
-        .zip(2..)
+        .zip((2..=12).cycle())
         .map(|(i, n)| (i * n) as usize)
         .sum::<usize>();
 
