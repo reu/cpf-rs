@@ -23,7 +23,7 @@ assert!(cpf::valid("385.211.390-39".parse::<Cpf>()?));
 
 ## no_std support
 
-The library makes no dinamic allocation and can be used on no_std
+The library makes no dynamic allocation and can be used on no_std
 environments by disabling the `std` flag:
 
 ```toml
